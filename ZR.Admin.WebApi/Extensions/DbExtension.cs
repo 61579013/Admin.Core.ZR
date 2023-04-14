@@ -42,7 +42,6 @@ namespace ZR.Admin.WebApi.Extensions
                     DbType = (IocDbType)dbType,
                     IsAutoCloseConnection = true
                 }
-                   //...增加其他数据库
                 };
             SugarIocServices.AddSqlSugar(iocList);
             SugarIocServices.ConfigurationSugar(db =>
@@ -52,7 +51,7 @@ namespace ZR.Admin.WebApi.Extensions
 
                 iocList.ForEach(iocConfig =>
                 {
-                   SetSugarAop(db, iocConfig);
+                    SetSugarAop(db, iocConfig);
                 });
             });
         }
@@ -60,24 +59,43 @@ namespace ZR.Admin.WebApi.Extensions
         private static void SetSugarAop(SqlSugarClient db, IocConfig iocConfig)
         {
             var config = db.GetConnection(iocConfig.ConfigId).CurrentConnectionConfig;
-            
+
             string configId = config.ConfigId;
-            db.GetConnectionScope(configId).Aop.OnLogExecuting = (sql, pars) =>
+            db.GetConnectionScope(configId).Aop.OnLogExecuted = (sql, pars) =>
             {
                 string log = $"【db{configId} SQL语句】{UtilMethods.GetSqlString(config.DbType, sql, pars)}\n";
-                if (sql.StartsWith("UPDATE", StringComparison.OrdinalIgnoreCase) || sql.StartsWith("INSERT", StringComparison.OrdinalIgnoreCase))
-                    logger.Warn(log);
-                else if (sql.StartsWith("DELETE", StringComparison.OrdinalIgnoreCase) || sql.StartsWith("TRUNCATE", StringComparison.OrdinalIgnoreCase))
-                    logger.Error(log);
-                else
+                if (sql.TrimStart().StartsWith("SELECT", StringComparison.OrdinalIgnoreCase))
+                {
                     logger.Info(log);
+                }
+                else if (sql.StartsWith("UPDATE", StringComparison.OrdinalIgnoreCase) || sql.StartsWith("INSERT", StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.Warn(log);
+                }
+                else if (sql.StartsWith("DELETE", StringComparison.OrdinalIgnoreCase) || sql.StartsWith("TRUNCATE", StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.Error(log);
+                }
+                else
+                {
+                    log = $"【db{configId} SQL语句】dbo.{sql} {string.Join(", ", pars.Select(x => x.ParameterName + " = " + GetParsValue(x)))};\n";
+                    logger.Info(log);
+                }
             };
 
             db.GetConnectionScope(configId).Aop.OnError = (e) =>
             {
-                Console.ForegroundColor = ConsoleColor.Red;
-                logger.Error(e, $"执行SQL出错：{e.Message}");
+                logger.Error(e, $"执行SQL出错：{e.Message}，{e.StackTrace}");
             };
+        }
+
+        private static object GetParsValue(SugarParameter x)
+        {
+            if (x.DbType == System.Data.DbType.String || x.DbType == System.Data.DbType.DateTime || x.DbType == System.Data.DbType.String)
+            {
+                return "'" + x.Value + "'";
+            }
+            return x.Value;
         }
 
         /// <summary>
