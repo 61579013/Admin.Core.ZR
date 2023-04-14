@@ -83,7 +83,9 @@ export function del${genTable.BusinessName}(pid) {
   })
 }
 
-// 清空${genTable.functionName}
+/**
+ * 清空${genTable.functionName}
+ */
 export function clear${genTable.BusinessName}() {
   return request({
     url: '${genTable.ModuleName}/${genTable.BusinessName}/clean',
@@ -91,9 +93,20 @@ export function clear${genTable.BusinessName}() {
   })
 }
 
-// 导出${genTable.functionName}
+/**
+ * 导出${genTable.functionName}
+ * @param {*} query
+ */
 export async function export${genTable.BusinessName}(query) {
-  await downFile('${genTable.ModuleName}/${genTable.BusinessName}/export', { ...query })
+  await downFile(
+    '${genTable.ModuleName}/${genTable.BusinessName}/export', 
+    { ...query }
+    // {
+    //   paramsSerializer: function (params) {
+    //     return QS.stringify(params, { indices: false })
+    //   }
+    // }
+  )
 }
 
 $if(showCustomInput)
