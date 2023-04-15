@@ -41,6 +41,14 @@
 | Vue3        |        | [克隆/下载](https://gitee.com/izory/ZRAdmin-vue)                 |
 | Vue2 + Net7 |        | [克隆/下载](https://gitee.com/izory/ZrAdminNetCore/tree/net7.0/) |
 
+## 分支说明
+- master为net5.0版本，更新速度最快；
+- dev为作者开发分支以net5.0分支为基础(代码随时会被推送，不保证运行和使用);
+- net7.0默认分支，更新会比较慢。
+
+> 如果想要体验最新的功能或者解决某个bug，git使用 cherry-pick 获取提交的内容
+
+
 ## 🍁 前端技术
 
 Vue 版前端技术栈 ：基于 vue2.x/vue3.x、vuex、vue-router 、vue-cli 、axios、 element-ui、echats、i18n 国际化等，前端采用 vscode 工具开发
@@ -86,12 +94,12 @@ Vue 版前端技术栈 ：基于 vue2.x/vue3.x、vuex、vue-router 、vue-cli �
 
 ```
 ├─ZR.Service             		->[服务层类库]：提供WebApi接口调用；
-├─ZR.Repository                     ->[仓库层类库]：方便提供有执行存储过程的操作；
+├─ZR.Repository                 ->[仓库层类库]：方便提供有执行存储过程的操作；
 ├─ZR.Model                		->[实体层类库]：提供项目中的数据库表、数据传输对象；
-├─ZR.Admin.WebApi               	->[webapi接口]：为Vue版或其他三方系统提供接口服务。
+├─ZR.Admin.WebApi              	->[webapi接口]：为Vue版或其他三方系统提供接口服务。
 ├─ZR.Tasks               		->[定时任务类库]：提供项目定时任务实现功能；
-├─ZR.CodeGenerator               	->[代码生成功能]：包含代码生成的模板、方法、代码生成的下载。
-├─ZR.Vue               			->[前端UI]：vue2.0版本UI层。
+├─ZR.CodeGenerator              ->[代码生成功能]：包含代码生成的模板、方法、代码生成的下载。
+├─ZR.Vue               			->[前端UI]：vue2.0版本。
 ├─document               		->[文档]：数据库脚本
 ```
 
