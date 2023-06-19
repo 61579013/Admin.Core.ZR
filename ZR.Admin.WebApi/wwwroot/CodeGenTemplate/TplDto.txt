@@ -41,7 +41,7 @@ $if(item.IsRequired)
 $end
 $if(replaceDto.ShowBtnExport)
 $if(item.IsExport)
-        [ExcelColumn(Name = "$if(item.ColumnComment == "")${item.CsharpField}${else}${item.ColumnComment}${end}"$if(item.CsharpType == "DateTime"), Format = "yyyy-MM-dd HH:mm:ss"$end)]
+        [ExcelColumn(Name = "$if(item.ColumnComment == "")${item.CsharpField}${else}${item.ColumnComment}${end}"$if(item.CsharpType == "DateTime"), Format = "yyyy-MM-dd HH:mm:ss", Width = 20$end)]
 $else
         [ExcelIgnore]
 $end
