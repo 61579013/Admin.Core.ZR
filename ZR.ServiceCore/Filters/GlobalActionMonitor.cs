@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
 using NLog;
+using System.Text;
 using ZR.Model.System;
 using ZR.ServiceCore.Services;
 
@@ -19,6 +20,37 @@ namespace ZR.ServiceCore.Middleware
         public GlobalActionMonitor(ISysOperLogService operLogService)
         {
             OperLogService = operLogService;
+        }
+        /// <summary>
+        /// OnActionExecuting是在Action执行之前运行的方法。
+        /// </summary>
+        /// <param name="context"></param>
+        public override void OnActionExecuting(ActionExecutingContext context)
+        {
+            if (context.ActionDescriptor is not ControllerActionDescriptor controllerActionDescriptor) return;
+
+            //获得注解信息
+            LogAttribute logAttribute = GetLogAttribute(controllerActionDescriptor);
+            if (logAttribute != null && logAttribute.Encrypt.IsNotEmpty())
+            {
+                string KEY = "1234567890";
+                
+                var body = context.HttpContext.GetBody();
+                string decryptData = NETCore.Encrypt.EncryptProvider.AESDecrypt(body, KEY);
+                context.HttpContext.Request.Body = String2Stream(decryptData);
+
+                if (string.IsNullOrEmpty(decryptData))
+                {
+                    ApiResult response = new((int)ResultCode.PARAM_ERROR, "请求参数错误");
+
+                    context.Result = new JsonResult(response);
+                    return;
+                }
+
+                //Action不能通过[FromBody]读取
+                //传递参数到Action获取
+                //context.ActionArguments.Add("p", decryptData);
+            }
         }
 
         /// <summary>
@@ -47,7 +79,7 @@ namespace ZR.ServiceCore.Middleware
             {
                 logger.Info($"请求参数错误,{msg}");
                 ApiResult response = new((int)ResultCode.PARAM_ERROR, msg);
-                
+
                 context.Result = new JsonResult(response);
             }
             return base.OnActionExecutionAsync(context, next);
@@ -134,5 +166,18 @@ namespace ZR.ServiceCore.Middleware
 
             return attribute as LogAttribute;
         }
+
+        /// <summary>
+        /// 将字符串转换成流
+        /// </summary>
+        /// <param name="param"></param>
+        /// <returns></returns>
+        private static MemoryStream String2Stream(string param)
+        {
+            byte[] array = Encoding.UTF8.GetBytes(param);
+            MemoryStream stream = new MemoryStream(array);
+            return stream;
+        }
+
     }
 }

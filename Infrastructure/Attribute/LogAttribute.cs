@@ -17,6 +17,10 @@ namespace Infrastructure.Attribute
         /// 是否保存返回数据
         /// </summary>
         public bool IsSaveResponseData { get; set; } = true;
+        /// <summary>
+        /// 加密类型
+        /// </summary>
+        public string Encrypt { get; set; }
 
         public LogAttribute() { }
 
