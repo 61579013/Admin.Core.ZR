@@ -1,5 +1,6 @@
 ﻿using Infrastructure;
 using Infrastructure.Attribute;
+using Infrastructure.Enums;
 using Infrastructure.Model;
 using IPTools.Core;
 using Microsoft.AspNetCore.Http;
@@ -21,37 +22,6 @@ namespace ZR.ServiceCore.Middleware
         {
             OperLogService = operLogService;
         }
-        /// <summary>
-        /// OnActionExecuting是在Action执行之前运行的方法。
-        /// </summary>
-        /// <param name="context"></param>
-        public override void OnActionExecuting(ActionExecutingContext context)
-        {
-            if (context.ActionDescriptor is not ControllerActionDescriptor controllerActionDescriptor) return;
-
-            //获得注解信息
-            LogAttribute logAttribute = GetLogAttribute(controllerActionDescriptor);
-            if (logAttribute != null && logAttribute.Encrypt.IsNotEmpty())
-            {
-                string KEY = "1234567890";
-                
-                var body = context.HttpContext.GetBody();
-                string decryptData = NETCore.Encrypt.EncryptProvider.AESDecrypt(body, KEY);
-                context.HttpContext.Request.Body = String2Stream(decryptData);
-
-                if (string.IsNullOrEmpty(decryptData))
-                {
-                    ApiResult response = new((int)ResultCode.PARAM_ERROR, "请求参数错误");
-
-                    context.Result = new JsonResult(response);
-                    return;
-                }
-
-                //Action不能通过[FromBody]读取
-                //传递参数到Action获取
-                //context.ActionArguments.Add("p", decryptData);
-            }
-        }
 
         /// <summary>
         /// Action请求前
@@ -61,6 +31,26 @@ namespace ZR.ServiceCore.Middleware
         /// <returns></returns>
         public override Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
+            LogAttribute logAttribute = GetLogAttribute(context.ActionDescriptor as ControllerActionDescriptor);
+            if (logAttribute != null && logAttribute.Encrypt != EncryptType.None)
+            {
+                var body = context.HttpContext.GetBody();
+                string decryptData = string.Empty;
+                switch (logAttribute.Encrypt)
+                {
+                    case EncryptType.None:
+                        break;
+                    case EncryptType.Base64:
+                        decryptData = NETCore.Encrypt.EncryptProvider.Base64Decrypt(body);
+                        break;
+                    case EncryptType.Aes:
+                        break;
+                    default:
+                        break;
+                }
+                context.HttpContext.Request.Body = String2Stream(decryptData);
+                context.ActionArguments.Add("p", decryptData);
+            }
             string msg = string.Empty;
             var values = context.ModelState.Values;
             foreach (var item in values)
@@ -80,8 +70,9 @@ namespace ZR.ServiceCore.Middleware
                 logger.Info($"请求参数错误,{msg}");
                 ApiResult response = new((int)ResultCode.PARAM_ERROR, msg);
 
-                context.Result = new JsonResult(response);
+                context.Result = new JsonResult(response); 
             }
+            
             return base.OnActionExecutionAsync(context, next);
         }
 
@@ -144,7 +135,7 @@ namespace ZR.ServiceCore.Middleware
                     sysOperLog.JsonResult = logAttribute.IsSaveResponseData ? sysOperLog.JsonResult : "";
                 }
 
-                LogEventInfo ei = new(NLog.LogLevel.Info, "GlobalActionMonitor", "");
+                LogEventInfo ei = new(LogLevel.Info, "GlobalActionMonitor", "");
 
                 ei.Properties["jsonResult"] = !HttpMethods.IsGet(method) ? jsonResult : "";
                 ei.Properties["requestParam"] = sysOperLog.OperParam;

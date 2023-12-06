@@ -1,4 +1,5 @@
 ﻿using Infrastructure.Enums;
+using System.Security.Cryptography.Xml;
 
 namespace Infrastructure.Attribute
 {
@@ -20,7 +21,7 @@ namespace Infrastructure.Attribute
         /// <summary>
         /// 加密类型
         /// </summary>
-        public string Encrypt { get; set; }
+        public EncryptType Encrypt { get; set; } = EncryptType.None;
 
         public LogAttribute() { }
 
